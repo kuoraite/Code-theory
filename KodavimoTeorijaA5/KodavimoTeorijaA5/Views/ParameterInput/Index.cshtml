@@ -1,0 +1,125 @@
+﻿@model KodavimoTeorijaA5.Models.FlowViewModel
+
+<div>
+    @if (Model.Step == 1)
+    {
+        <form method="post" action="/ParameterInput/Step1">
+            <label for="m">Enter M (must be a number > 0):</label>
+            <input type="number" id="m" name="M" min="1" required />
+
+            <fieldset>
+                <legend>Select Input Type:</legend>
+                <div>
+                    <input type="radio" id="vector" name="InputType" value="Vector" checked />
+                    <label for="vector">Vector</label>
+                    <p>Enter a binary vector of size K.</p>
+                </div>
+                <div>
+                    <input type="radio" id="text" name="InputType" value="Text" />
+                    <label for="text">Text</label>
+                    <p>Enter a text string to be encoded.</p>
+                </div>
+                <div>
+                    <input type="radio" id="image" name="InputType" value="Image" />
+                    <label for="image">Image</label>
+                    <p>Upload an image to be encoded.</p>
+                </div>
+            </fieldset>
+
+            <button type="submit">Next</button>
+        </form>
+    }
+    else if (Model.Step == 2)
+    {
+        <form method="post" action="/ParameterInput/Step2" enctype="multipart/form-data">
+            <p>Parameter K: @Model.K</p>
+
+            @if (Model.InputType == "Vector")
+            {
+                <label for="vector">Enter Vector (size @Model.K):</label>
+                <input type="text" id="vector" name="Vector" required pattern="^[01]{@Model.K}$"
+                       title="Vector must consist only of 0s and 1s, and be exactly of size @Model.K." />
+            }
+            else if (Model.InputType == "Text")
+            {
+                <label for="text">Enter Text:</label>
+                <input type="text" id="text" name="Text" required />
+            }
+            else if (Model.InputType == "Image")
+            {
+                <label for="image">Upload BMP Image:</label>
+                <input type="file" id="image" name="Image" accept=".bmp,image/bmp" required />
+            }
+
+            <label for="pe">Enter PE (must be a decimal, dot or comma allowed):</label>
+            <input type="text" id="pe" name="PE" required pattern="^[0-9]+([.,][0-9]+)?$"
+                   title="PE must be a positive decimal number, allowing a dot or comma as the separator." />
+
+            <input type="hidden" name="M" value="@Model.M" />
+            <input type="hidden" name="InputType" value="@Model.InputType" />
+            <input type="hidden" name="K" value="@Model.K" />
+            <button type="submit">Next</button>
+        </form>
+    }
+    else if (Model.Step == 3)
+    {
+        <!-- Step 3 Form -->
+        <form method="post" action="/ParameterInput/Step3">
+            @if (Model.InputType == "Text" || Model.InputType == "Image")
+            {
+                <p>Text converted to bits vector: @Model.ConvertedVector</p>
+            }
+            <p>Encoded Vector: @Model.EncodedVector</p>
+            <p>Received from Channel: @Model.ChannelMessage</p>
+            <h4>Bit Changes:</h4>
+            @if (Model.Changes != null && Model.Changes.Any())
+            {
+                <ul>
+                    @foreach (var change in Model.Changes)
+                    {
+                        <li>@change</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p>No bits were changed.</p>
+            }
+            <label for="channelMessage">Edit Channel Message (must be same length and binary):</label>
+            <input type="text" id="channelMessage" name="ChannelMessage"
+                   pattern="^[01]{@Model.ChannelMessage.Length}$"
+                   title="Message must consist only of 0s and 1s and be exactly of the same length as the original channel message."
+                   value="@Model.ChannelMessage" required />
+
+            <input type="hidden" name="M" value="@Model.M" />
+            <input type="hidden" name="Vector" value="@Model.EncodedVector" />
+            <input type="hidden" name="PaddingBitsCount" value="@Model.PaddingBitsCount" />
+            <input type="hidden" name="InputType" value="@Model.InputType" />
+            <input type="hidden" name="ConvertedVectorThroughChannel" value="@Model.ConvertedVectorThroughChannel" />
+
+            <button type="submit">Decode</button>
+        </form>
+    }
+    else if (Model.Step == 4)
+    {
+        @if (Model.InputType == "Image")
+        {
+            <p>Decoded Image:</p>
+            <img src="data:image/bmp;base64,@Model.DecodedImage" alt="Decoded Image" />
+        }
+        else if (Model.InputType == "Text")
+        {
+            <p>Decoded Message</p>
+            <p>@Model.DecodedMessage</p>
+            <p>Converted vector back to message</p>
+            <p>@Model.ConvertedBackVector</p>
+        }
+        else
+        {
+            <p>Decoded Message</p>
+            <p>@Model.DecodedMessage</p>
+        }
+        <br />
+        <a href="/ParameterInput/Index">Restart</a>
+    }
+</div>

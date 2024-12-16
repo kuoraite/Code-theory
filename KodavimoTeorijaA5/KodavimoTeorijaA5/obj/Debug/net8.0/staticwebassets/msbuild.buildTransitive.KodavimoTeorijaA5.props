@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\buildMultiTargeting\KodavimoTeorijaA5.props" />
+</Project>
